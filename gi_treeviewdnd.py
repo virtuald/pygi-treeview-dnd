@@ -184,10 +184,47 @@ class TreeDragSourceMeta(GObjectMeta):
             addr = ctypes.cast(address, dbl_pointer)
             addr.contents.value = ctypes.cast(do_drag_data_get._thunk, ctypes.c_void_p).value
 
-class PatchedListStore(Gtk.ListStore):
-    '''ListStore object that can be used with the high-level TreeView DnD API'''
-    __metaclass__ = TreeDragSourceMeta
 
-class PatchedTreeStore(Gtk.TreeStore):
+################################################################################
+# The "with_metaclass()" method is included from the "six" library which has
+# it's own copyright and license:
+#
+# Copyright (c) 2010-2017 Benjamin Peterson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+def with_metaclass(meta, *bases):
+    """Create a base class with a metaclass."""
+    # This requires a bit of explanation: the basic idea is to make a dummy
+    # metaclass for one level of class instantiation that replaces itself with
+    # the actual metaclass.
+    class metaclass(meta):
+
+        def __new__(cls, name, this_bases, d):
+            return meta(name, bases, d)
+    return type.__new__(metaclass, 'temporary_class', (), {})
+
+################################################################################
+
+class PatchedListStore(with_metaclass(TreeDragSourceMeta, Gtk.ListStore)):
+    '''ListStore object that can be used with the high-level TreeView DnD API'''
+    pass
+
+class PatchedTreeStore(with_metaclass(TreeDragSourceMeta, Gtk.TreeStore)):
     '''TreeStore object that can be used with the high-level TreeView DnD API'''
-    __metaclass__ = TreeDragSourceMeta
+    pass
